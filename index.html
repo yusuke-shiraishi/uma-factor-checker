@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ウマ娘 因子相性チェッカー（リスト自動生成版）</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f0f2f5; padding: 15px; margin: 0; }
+    .container { background: #fff; padding: 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; }
+    h1 { font-size: 1.2rem; color: #27ae60; text-align: center; border-bottom: 2px dashed #27ae60; padding-bottom: 10px; }
+    h2 { font-size: 1rem; color: #333; margin-top: 20px; }
+    
+    .skill-group { display: flex; flex-wrap: wrap; gap: 8px; max-height: 250px; overflow-y: auto; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #fafafa;}
+    label { background: #e8f8f5; padding: 8px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; border: 1px solid #a3e4d7; display: flex; align-items: center; }
+    input[type="checkbox"] { margin-right: 5px; transform: scale(1.1); }
+    
+    .btn { display: block; width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 25px; }
+    
+    #result { margin-top: 25px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffeeba; display: none; }
+    .result-title { font-weight: bold; color: #856404; font-size: 0.9rem; margin-bottom: 5px;}
+    .result-data { font-size: 1.1rem; color: #333; margin-bottom: 15px; font-weight: bold;}
+    .rank { font-size: 1.4rem; font-weight: bold; color: #c0392b; text-align: center; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🥕 因子相性チェッカー（仮）</h1>
+
+    <h2>① サポカから取る予定のスキル</h2>
+    <!-- ★HTMLには空箱だけ置いておく！ -->
+    <div class="skill-group" id="support-skills"></div>
+
+    <h2>② 因子のスクショ結果（今は手動）</h2>
+    <!-- ★ここも空箱！ -->
+    <div class="skill-group" id="factor-skills"></div>
+
+    <button class="btn" onclick="checkCompatibility()">相性を判定する！</button>
+
+    <div id="result">
+      <div class="result-title">🎯 サポカと被っているスキル</div>
+      <div class="result-data" id="match-skills"></div>
+      <div class="result-title">✨ サポカ外から補完できるスキル（神）</div>
+      <div class="result-data" id="extra-skills"></div>
+      <div class="rank" id="rank-text"></div>
+    </div>
+  </div>
+
+  <script>
+    // ★これが「データ（リスト）」です！
+    // サイトから拾ってきたスキル名を、ここに追加するだけで画面にボタンが勝手に増えます！
+    const allSkills = [
+      "コーナー巧者◯", "直線巧者", "弧線のプロフェッサー", "ハヤテ一文字",
+      "右回り◯", "左回り◯", "春ウマ娘◯", "秋ウマ娘◯",
+      "直線一気", "強攻策", "直線加速", "アオハル点火・速",
+      "アオハル点火・体", "URAシナリオ", "日本ダービー", "有馬記念", "宝塚記念",
+      "地固め", "先手必勝", "遊びはおしまいっ！", "スリップストリーム", "尻尾上がり"
+    ];
+
+    // ★画面が開いた時に、リストの数だけボタンを「自動生成」する処理
+    window.onload = function() {
+      const supportDiv = document.getElementById('support-skills');
+      const factorDiv = document.getElementById('factor-skills');
+
+      allSkills.forEach(skill => {
+        // サポカ側のボタン作成
+        supportDiv.innerHTML += `<label><input type="checkbox" value="${skill}">${skill}</label>`;
+        // 因子側のボタン作成
+        factorDiv.innerHTML += `<label><input type="checkbox" value="${skill}">${skill}</label>`;
+      });
+    };
+
+    // 判定処理（前回と同じ）
+    function checkCompatibility() {
+      const supportNodes = document.querySelectorAll('#support-skills input:checked');
+      const supportSkills = Array.from(supportNodes).map(input => input.value);
+
+      const factorNodes = document.querySelectorAll('#factor-skills input:checked');
+      const factorSkills = Array.from(factorNodes).map(input => input.value);
+
+      let match = [];
+      let extra = [];
+
+      factorSkills.forEach(skill => {
+        if (supportSkills.includes(skill)) {
+          match.push(skill);
+        } else {
+          extra.push(skill);
+        }
+      });
+
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('match-skills').textContent = match.length > 0 ? match.join('、') : 'なし';
+      document.getElementById('extra-skills').textContent = extra.length > 0 ? extra.join('、') : 'なし';
+
+      let rankText = "";
+      if (extra.length >= 3) {
+        rankText = "総合評価：Sランク (即レンタル確定!)🎉";
+      } else if (extra.length >= 1 || match.length >= 2) {
+        rankText = "総合評価：Aランク (かなり優秀!)✨";
+      } else {
+        rankText = "総合評価：Bランク (妥協ライン)";
+      }
+      document.getElementById('rank-text').textContent = rankText;
+    }
+  </script>
+
+</body>
+</html>
