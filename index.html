@@ -3,166 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ウマ娘 ガチ勢向け因子チェッカー</title>
+  <title>ウマ娘 ガチ勢向け因子チェッカー（カスタム版）</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f8; padding: 12px; margin: 0; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f0f2f5; padding: 12px; margin: 0; color: #333; }
     .container { background: #fff; padding: 15px; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    h1 { font-size: 1.2rem; color: #2e7d32; text-align: center; border-bottom: 2px dashed #a5d6a7; padding-bottom: 10px; margin-top: 0; }
+    h1 { font-size: 1.2rem; color: #333; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 0; }
     
-    .selector-group { display: flex; gap: 8px; margin-bottom: 15px; }
-    select { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #fff; font-weight: bold; }
+    .section { margin-bottom: 20px; padding: 12px; border-radius: 8px; }
+    .section-1 { background: #e3f2fd; border: 1px solid #bbdefb; }
+    .section-2 { background: #e8f5e9; border: 1px solid #c8e6c9; }
+    .section-3 { background: #fce4ec; border: 1px solid #f8bbd0; }
 
-    .section-title { font-size: 0.95rem; font-weight: bold; margin-top: 15px; margin-bottom: 8px; color: #1565c0; display: flex; flex-direction: column;}
-    .note { font-size: 0.75rem; color: #666; font-weight: normal; margin-top: 4px; }
+    .section-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 6px; display: flex; flex-direction: column;}
+    .note { font-size: 0.75rem; color: #555; font-weight: normal; margin-top: 2px; margin-bottom: 8px;}
     
-    .skill-group { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; min-height: 50px; }
-    label { background: #fff; padding: 6px 10px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; border: 1px solid #ccc; display: flex; align-items: center; user-select: none; transition: 0.1s; }
+    .skill-group { display: flex; flex-wrap: wrap; gap: 6px; max-height: 200px; overflow-y: auto; padding: 8px; background: rgba(255,255,255,0.6); border-radius: 6px; border: 1px solid rgba(0,0,0,0.1); }
+    label { background: #fff; padding: 6px 10px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; border: 1px solid #ccc; display: flex; align-items: center; user-select: none; transition: 0.15s; }
     input[type="checkbox"] { margin-right: 4px; transform: scale(1.1); }
     
-    /* 選択したボタンの色を変える（スマホ対応） */
-    #support-skills label:has(input:checked) { background: #e3f2fd; border-color: #2196f3; font-weight: bold; color: #0d47a1; }
-    #factor-skills label:has(input:checked) { background: #fce4ec; border-color: #e91e63; font-weight: bold; color: #880e4f; }
+    /* 選択時の色変化 */
+    .section-1 label:has(input:checked) { background: #1976d2; color: #fff; border-color: #1976d2; font-weight: bold; }
+    .section-2 label:has(input:checked) { background: #388e3c; color: #fff; border-color: #388e3c; font-weight: bold; }
+    .section-3 label:has(input:checked) { background: #d32f2f; color: #fff; border-color: #d32f2f; font-weight: bold; }
 
-    .btn { display: block; width: 100%; padding: 14px; background: #d32f2f; color: white; border: none; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 4px #b71c1c; }
-    .btn:active { transform: translateY(4px); box-shadow: 0 0 #b71c1c; }
-    
-    #result { margin-top: 20px; padding: 15px; background: #fffde7; border-radius: 8px; border: 1px solid #fff59d; display: none; }
+    #result { margin-top: 10px; padding: 15px; background: #fffde7; border-radius: 8px; border: 2px solid #fbc02d; }
     .result-item { margin-bottom: 12px; }
     .r-title { font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; }
     .r-data { font-size: 0.95rem; color: #222; font-weight: bold; line-height: 1.4; }
     .r-miss { color: #d32f2f; }
-    .r-hit { color: #2e7d32; }
+    .r-hit { color: #1976d2; }
+    .r-extra { color: #f57f17; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🥕 環境適応型 因子チェッカー</h1>
+    <h1>🐎 因子チェッカー（環境カスタム版）</h1>
     
-    <div class="selector-group">
-      <!-- 大会/コース選択 -->
-      <select id="event-select" onchange="updateUI()"></select>
-      <!-- 脚質選択 -->
-      <select id="style-select" onchange="updateUI()">
-        <option value="逃げ">逃げ</option>
-        <option value="先行">先行</option>
-        <option value="差し">差し</option>
-        <option value="追込">追込</option>
-      </select>
+    <!-- STEP 1: 目標スキルの設定 -->
+    <div class="section section-1">
+      <div class="section-title">
+        ① 今回の「必須スキル」を選ぶ
+        <span class="note">※チャンミ/LoHに合わせて、絶対に積みたいスキルを全選択</span>
+      </div>
+      <div class="skill-group" id="target-skills" onchange="updateSupportList()"></div>
     </div>
 
-    <div class="section-title">
-      ① 今の編成（サポカ）で自力で取れる必須スキル
-      <span class="note">※上の条件で必要なスキルだけが表示されます。手持ちで確保できるものにチェック！</span>
+    <!-- STEP 2: サポカで取れるスキルの確認 -->
+    <div class="section section-2">
+      <div class="section-title">
+        ② そのうち「サポカ」で取れるものは？
+        <span class="note">※①で選んだスキルだけが表示されます。自力で取れるものにチェック</span>
+      </div>
+      <div class="skill-group" id="support-skills" onchange="calculate()">
+        <span style="font-size:0.8rem; color:#666;">※先に①を選んでください</span>
+      </div>
     </div>
-    <div class="skill-group" id="support-skills"></div>
 
-    <div class="section-title">
-      ② 因子（親）が持っている白因子
-      <span class="note">※必須スキル＋汎用の優秀スキルが表示されます</span>
+    <!-- STEP 3: 因子の確認 -->
+    <div class="section section-3">
+      <div class="section-title">
+        ③ 「親因子」が持っているスキル
+        <span class="note">※レンタル親の白因子をチェック（SP捌け口探し）</span>
+      </div>
+      <div class="skill-group" id="factor-skills" onchange="calculate()"></div>
     </div>
-    <div class="skill-group" id="factor-skills"></div>
 
-    <button class="btn" onclick="checkCompatibility()">相性を判定する！</button>
-
+    <!-- 判定結果 -->
     <div id="result">
       <div class="result-item">
-        <div class="r-title">🎯 因子から補完できた必須スキル（神！）</div>
-        <div class="r-data r-hit" id="res-hit"></div>
+        <div class="r-title">🎯 サポカの弱点を因子でカバーできた必須枠！</div>
+        <div class="r-data r-hit" id="res-hit">ここに表示されます</div>
       </div>
       <div class="result-item">
         <div class="r-title">❌ サポカにも因子にも無い必須スキル（妥協点）</div>
-        <div class="r-data r-miss" id="res-miss"></div>
+        <div class="r-data r-miss" id="res-miss">ここに表示されます</div>
       </div>
+      <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
       <div class="result-item">
-        <div class="r-title">✨ その他、因子から拾えた優秀なスキル</div>
-        <div class="r-data" id="res-extra"></div>
+        <div class="r-title">✨ 必須枠以外で拾えた【SPの捌け口】</div>
+        <div class="r-data r-extra" id="res-extra">ここに表示されます</div>
       </div>
     </div>
   </div>
 
   <script>
-    // 2026年9月最新メタデータ
-    const metaData = {
-      "9月マイルチャンミ (東京1800m)": {
-        "逃げ": ["アングリング×スキーミング", "スピードイーター", "地固め", "先手必勝", "危険回避", "ポジションセンス", "アオハル点火・賢", "左回り◯", "秋ウマ娘◯", "マイルコーナー◯", "マイル直線◯"],
-        "先行": ["つぼみ、ほころぶ時", "ヴィクトリーショット！", "ハイボルテージ", "スピードイーター", "咲け咲け！", "押しの一手", "左回り◯", "秋ウマ娘◯", "マイルコーナー◯", "マイル直線◯"],
-        "差し": ["電光石火", "ハイボルテージ", "つぼみ、ほころぶ時", "差し切り体勢", "左回り◯", "秋ウマ娘◯", "マイルコーナー◯", "マイル直線◯"],
-        "追込": ["電光石火", "抜群の切れ味", "君臨", "迫る影", "左回り◯", "秋ウマ娘◯", "マイルコーナー◯", "マイル直線◯"]
-      },
-      "9月凱旋門賞チャンミ (ロンシャン2400)": {
-        "逃げ": ["アングリング×スキーミング", "超新星爆発！", "あっぱれ大盤振る舞い！", "危険回避", "ポジションセンス", "地固め", "右回り◯", "秋ウマ娘◯", "道悪◯", "中距離コーナー◯", "中距離直線◯"],
-        "先行": ["王手", "超新星爆発！", "Joy to the World.", "恵福バルカローレ", "右回り◯", "秋ウマ娘◯", "道悪◯", "中距離コーナー◯", "中距離直線◯"],
-        "差し": ["王手", "黄金を訪ねて", "Joy to the World.", "起死回生", "右回り◯", "秋ウマ娘◯", "道悪◯", "中距離コーナー◯", "中距離直線◯"],
-        "追込": ["君臨", "直線一気", "黄金を訪ねて", "Joy to the World.", "右回り◯", "秋ウマ娘◯", "道悪◯", "中距離コーナー◯", "中距離直線◯"]
-      }
-    };
+    // マスターデータベース（ここに全スキルを入れておけばOK！）
+    const masterSkills = [
+      "アングリング×スキーミング", "王手", "君臨", "電光石火", "ハイボルテージ", "つぼみ、ほころぶ時", "ヴィクトリーショット！", 
+      "スピードイーター", "地固め", "先手必勝", "盤石の構え", "危険回避", "ポジションセンス", "アオハル点火・賢",
+      "起死回生", "迫る影", "直線一気", "抜群の切れ味", "差し切り体勢", "抜け出し準備", "あっぱれ大盤振る舞い！", "超新星爆発！",
+      "マイルコーナー◯", "マイル直線◯", "中距離コーナー◯", "中距離直線◯", "長距離コーナー◯", "長距離直線◯",
+      "右回り◯", "左回り◯", "秋ウマ娘◯", "冬ウマ娘◯", "道悪◯", "良バ場◯",
+      "ウマ好み", "遊びはおしまいっ！", "尻尾上がり", "ペースアップ", "スリップストリーム", "直線巧者", "コーナー巧者◯", "垂れウマ回避",
+      "トレセン絆シナリオ", "URAシナリオ", "アオハル杯シナリオ"
+    ];
 
-    // どの環境・脚質でも腐らない汎用スキル
-    const commonSkills = ["トレセン絆シナリオ", "ウマ好み", "遊びはおしまいっ！", "尻尾上がり", "ペースアップ", "スリップストリーム", "直線巧者", "コーナー巧者◯", "垂れウマ回避"];
-
-    // 画面読み込み時の処理
     window.onload = function() {
-      const eventSelect = document.getElementById('event-select');
-      for (let eventName in metaData) {
-        eventSelect.innerHTML += `<option value="${eventName}">${eventName}</option>`;
-      }
-      updateUI();
+      // 画面が開いたら、STEP1とSTEP3に全スキルを並べる
+      const targetDiv = document.getElementById('target-skills');
+      const factorDiv = document.getElementById('factor-skills');
+      
+      masterSkills.forEach(skill => {
+        const checkboxHTML = `<label><input type="checkbox" value="${skill}">${skill}</label>`;
+        targetDiv.innerHTML += checkboxHTML;
+        factorDiv.innerHTML += checkboxHTML;
+      });
     };
 
-    // プルダウンを切り替えたらボタンを出し直す処理
-    function updateUI() {
-      const eventName = document.getElementById('event-select').value;
-      const styleName = document.getElementById('style-select').value;
-      
-      const reqSkills = metaData[eventName][styleName] || [];
-      // 必須スキルと汎用スキルを合体させて重複を消す
-      const factorPool = [...new Set([...reqSkills, ...commonSkills])];
-
-      // ① サポカ枠（必須スキルのみ表示）
+    // STEP1が操作されたら、STEP2のリストを自動生成する
+    function updateSupportList() {
+      const targetNodes = document.querySelectorAll('#target-skills input:checked');
       const supportDiv = document.getElementById('support-skills');
-      supportDiv.innerHTML = '';
-      reqSkills.forEach(skill => {
-        supportDiv.innerHTML += `<label><input type="checkbox" value="${skill}">${skill}</label>`;
-      });
-
-      // ② 因子枠（必須＋汎用を表示）
-      const factorDiv = document.getElementById('factor-skills');
-      factorDiv.innerHTML = '';
-      factorPool.forEach(skill => {
-        factorDiv.innerHTML += `<label><input type="checkbox" value="${skill}">${skill}</label>`;
-      });
       
-      document.getElementById('result').style.display = 'none';
+      supportDiv.innerHTML = '';
+      if(targetNodes.length === 0) {
+        supportDiv.innerHTML = '<span style="font-size:0.8rem; color:#666;">※先に①を選んでください</span>';
+      } else {
+        Array.from(targetNodes).forEach(input => {
+          supportDiv.innerHTML += `<label><input type="checkbox" value="${input.value}">${input.value}</label>`;
+        });
+      }
+      calculate(); // リストが変わったら結果も再計算
     }
 
-    // 判定ロジック
-    function checkCompatibility() {
-      const eventName = document.getElementById('event-select').value;
-      const styleName = document.getElementById('style-select').value;
-      const reqSkills = metaData[eventName][styleName] || [];
+    // 判定ロジック（SPの捌け口を計算！）
+    function calculate() {
+      // 各STEPでチェックされているスキルを取得
+      const targets = Array.from(document.querySelectorAll('#target-skills input:checked')).map(n => n.value);
+      const supports = Array.from(document.querySelectorAll('#support-skills input:checked')).map(n => n.value);
+      const factors = Array.from(document.querySelectorAll('#factor-skills input:checked')).map(n => n.value);
 
-      const supportNodes = document.querySelectorAll('#support-skills input:checked');
-      const supportSkills = Array.from(supportNodes).map(input => input.value);
+      // 1. 弱点 = 「目標」のうち「サポカ」で取れないもの
+      let missingReq = targets.filter(s => !supports.includes(s)); 
+      
+      // 2. 🎯 カバー成功 = 「弱点」のうち「因子」が持っているもの
+      let hitSkills = missingReq.filter(s => factors.includes(s)); 
+      
+      // 3. ❌ 妥協点 = 「弱点」のうち「因子」も持っていないもの
+      let stillMiss = missingReq.filter(s => !factors.includes(s)); 
+      
+      // 4. ✨ SPの捌け口 = 「因子」が持っているスキルのうち、「目標」に設定していない余剰スキル
+      let extraSkills = factors.filter(s => !targets.includes(s)); 
 
-      const factorNodes = document.querySelectorAll('#factor-skills input:checked');
-      const factorSkills = Array.from(factorNodes).map(input => input.value);
-
-      // 1. サポカで取れない必須スキル（弱点）
-      let missingReq = reqSkills.filter(s => !supportSkills.includes(s)); 
-      
-      // 2. 弱点のうち、因子で補えたスキル（🎯）
-      let hitSkills = missingReq.filter(s => factorSkills.includes(s)); 
-      
-      // 3. 弱点のうち、因子でも補えなかったスキル（❌）
-      let stillMiss = missingReq.filter(s => !factorSkills.includes(s)); 
-      
-      // 4. 必須枠以外で因子から拾えた汎用スキル（✨）
-      let extraSkills = factorSkills.filter(s => !reqSkills.includes(s)); 
-
-      document.getElementById('result').style.display = 'block';
-      
-      document.getElementById('res-hit').textContent = hitSkills.length > 0 ? hitSkills.join('、') : 'なし';
-      document.getElementById('res-miss').textContent = stillMiss.length > 0 ? stillMiss.join('、') : '完璧！(全必須スキル網羅)';
+      // 画面にテキストを出力
+      document.getElementById('res-hit').textContent = hitSkills.length > 0 ? hitSkills.join('、') : (missingReq.length === 0 ? '弱点なし！' : 'なし');
+      document.getElementById('res-miss').textContent = stillMiss.length > 0 ? stillMiss.join('、') : (targets.length === 0 ? '目標を設定してください' : '完璧！(全必須スキル網羅)');
       document.getElementById('res-extra').textContent = extraSkills.length > 0 ? extraSkills.join('、') : 'なし';
     }
   </script>
