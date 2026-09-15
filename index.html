@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ウマ娘 ガチ勢向け因子チェッカー（カスタム版）</title>
+  <title>ウマ娘 ガチ勢向け因子チェッカー（OCR搭載版）</title>
+  <!-- ★完全無料の画像認識AI「Tesseract.js」を読み込む魔法の1行 -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f0f2f5; padding: 12px; margin: 0; color: #333; }
     .container { background: #fff; padding: 15px; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
@@ -21,10 +23,16 @@
     label { background: #fff; padding: 6px 10px; border-radius: 16px; font-size: 0.8rem; cursor: pointer; border: 1px solid #ccc; display: flex; align-items: center; user-select: none; transition: 0.15s; }
     input[type="checkbox"] { margin-right: 4px; transform: scale(1.1); }
     
-    /* 選択時の色変化 */
     .section-1 label:has(input:checked) { background: #1976d2; color: #fff; border-color: #1976d2; font-weight: bold; }
     .section-2 label:has(input:checked) { background: #388e3c; color: #fff; border-color: #388e3c; font-weight: bold; }
     .section-3 label:has(input:checked) { background: #d32f2f; color: #fff; border-color: #d32f2f; font-weight: bold; }
+
+    /* AIアップロード部分のデザイン */
+    .ocr-box { background: #fff3e0; border: 2px dashed #ff9800; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
+    .ocr-box input[type="file"] { display: none; }
+    .upload-btn { background: #ff9800; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; display: inline-block; margin-bottom: 10px; box-shadow: 0 3px #e65100;}
+    .upload-btn:active { transform: translateY(3px); box-shadow: 0 0 #e65100; }
+    #ocr-status { font-size: 0.85rem; font-weight: bold; color: #e65100; }
 
     #result { margin-top: 10px; padding: 15px; background: #fffde7; border-radius: 8px; border: 2px solid #fbc02d; }
     .result-item { margin-bottom: 12px; }
@@ -37,38 +45,35 @@
 </head>
 <body>
   <div class="container">
-    <h1>🐎 因子チェッカー（環境カスタム版）</h1>
-    
-    <!-- STEP 1: 目標スキルの設定 -->
+    <h1>🐎 因子チェッカー（OCR搭載版）</h1>
+
     <div class="section section-1">
-      <div class="section-title">
-        ① 今回の「必須スキル」を選ぶ
-        <span class="note">※チャンミ/LoHに合わせて、絶対に積みたいスキルを全選択</span>
-      </div>
+      <div class="section-title">① 今回の「必須スキル」を選ぶ</div>
       <div class="skill-group" id="target-skills" onchange="updateSupportList()"></div>
     </div>
 
-    <!-- STEP 2: サポカで取れるスキルの確認 -->
     <div class="section section-2">
-      <div class="section-title">
-        ② そのうち「サポカ」で取れるものは？
-        <span class="note">※①で選んだスキルだけが表示されます。自力で取れるものにチェック</span>
-      </div>
+      <div class="section-title">② そのうち「サポカ」で取れるものは？</div>
       <div class="skill-group" id="support-skills" onchange="calculate()">
         <span style="font-size:0.8rem; color:#666;">※先に①を選んでください</span>
       </div>
     </div>
 
-    <!-- STEP 3: 因子の確認 -->
+    <!-- ★新機能：画像読み取りエリア -->
     <div class="section section-3">
-      <div class="section-title">
-        ③ 「親因子」が持っているスキル
-        <span class="note">※レンタル親の白因子をチェック（SP捌け口探し）</span>
+      <div class="section-title">③ 「親因子」のスキルを入力</div>
+      
+      <div class="ocr-box">
+        <label class="upload-btn">
+          📸 因子のスクショを読み込む
+          <input type="file" id="image-upload" accept="image/png, image/jpeg" onchange="processImage(event)">
+        </label>
+        <div id="ocr-status">※手動でチェックを入れることも可能です</div>
       </div>
+
       <div class="skill-group" id="factor-skills" onchange="calculate()"></div>
     </div>
 
-    <!-- 判定結果 -->
     <div id="result">
       <div class="result-item">
         <div class="r-title">🎯 サポカの弱点を因子でカバーできた必須枠！</div>
@@ -87,7 +92,6 @@
   </div>
 
   <script>
-    // マスターデータベース（ここに全スキルを入れておけばOK！）
     const masterSkills = [
       "アングリング×スキーミング", "王手", "君臨", "電光石火", "ハイボルテージ", "つぼみ、ほころぶ時", "ヴィクトリーショット！", 
       "スピードイーター", "地固め", "先手必勝", "盤石の構え", "危険回避", "ポジションセンス", "アオハル点火・賢",
@@ -99,10 +103,8 @@
     ];
 
     window.onload = function() {
-      // 画面が開いたら、STEP1とSTEP3に全スキルを並べる
       const targetDiv = document.getElementById('target-skills');
       const factorDiv = document.getElementById('factor-skills');
-      
       masterSkills.forEach(skill => {
         const checkboxHTML = `<label><input type="checkbox" value="${skill}">${skill}</label>`;
         targetDiv.innerHTML += checkboxHTML;
@@ -110,11 +112,9 @@
       });
     };
 
-    // STEP1が操作されたら、STEP2のリストを自動生成する
     function updateSupportList() {
       const targetNodes = document.querySelectorAll('#target-skills input:checked');
       const supportDiv = document.getElementById('support-skills');
-      
       supportDiv.innerHTML = '';
       if(targetNodes.length === 0) {
         supportDiv.innerHTML = '<span style="font-size:0.8rem; color:#666;">※先に①を選んでください</span>';
@@ -123,29 +123,57 @@
           supportDiv.innerHTML += `<label><input type="checkbox" value="${input.value}">${input.value}</label>`;
         });
       }
-      calculate(); // リストが変わったら結果も再計算
+      calculate();
     }
 
-    // 判定ロジック（SPの捌け口を計算！）
+    // ★画像読み取り（OCR）の魔法のコード
+    async function processImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusText = document.getElementById('ocr-status');
+      statusText.textContent = "⏳ AIが画像を解析中...（初回は数秒かかります）";
+      
+      try {
+        // Tesseract.jsで日本語を読み取り！
+        const result = await Tesseract.recognize(file, 'jpn');
+        const extractedText = result.data.text.replace(/\s+/g, ""); // スペースを除去して比較しやすくする
+        console.log("読み取り結果:", extractedText);
+
+        let hitCount = 0;
+        // 読み取った文字の中に、マスターリストのスキル名が含まれているかチェック
+        masterSkills.forEach(skill => {
+          // 「◯」などの記号揺れ対策で部分一致で探す
+          const searchWord = skill.replace("◯", ""); 
+          if (extractedText.includes(searchWord)) {
+            // 見つかったら、③の該当チェックボックスをONにする！
+            const checkbox = document.querySelector(`#factor-skills input[value="${skill}"]`);
+            if (checkbox && !checkbox.checked) {
+              checkbox.checked = true;
+              hitCount++;
+            }
+          }
+        });
+
+        statusText.textContent = `✅ 解析完了！${hitCount}個のスキルを自動チェックしました！`;
+        calculate(); // チェックが入ったので自動再計算
+
+      } catch (error) {
+        statusText.textContent = "❌ 解析に失敗しました。もう一度試してください。";
+        console.error(error);
+      }
+    }
+
     function calculate() {
-      // 各STEPでチェックされているスキルを取得
       const targets = Array.from(document.querySelectorAll('#target-skills input:checked')).map(n => n.value);
       const supports = Array.from(document.querySelectorAll('#support-skills input:checked')).map(n => n.value);
       const factors = Array.from(document.querySelectorAll('#factor-skills input:checked')).map(n => n.value);
 
-      // 1. 弱点 = 「目標」のうち「サポカ」で取れないもの
       let missingReq = targets.filter(s => !supports.includes(s)); 
-      
-      // 2. 🎯 カバー成功 = 「弱点」のうち「因子」が持っているもの
       let hitSkills = missingReq.filter(s => factors.includes(s)); 
-      
-      // 3. ❌ 妥協点 = 「弱点」のうち「因子」も持っていないもの
       let stillMiss = missingReq.filter(s => !factors.includes(s)); 
-      
-      // 4. ✨ SPの捌け口 = 「因子」が持っているスキルのうち、「目標」に設定していない余剰スキル
       let extraSkills = factors.filter(s => !targets.includes(s)); 
 
-      // 画面にテキストを出力
       document.getElementById('res-hit').textContent = hitSkills.length > 0 ? hitSkills.join('、') : (missingReq.length === 0 ? '弱点なし！' : 'なし');
       document.getElementById('res-miss').textContent = stillMiss.length > 0 ? stillMiss.join('、') : (targets.length === 0 ? '目標を設定してください' : '完璧！(全必須スキル網羅)');
       document.getElementById('res-extra').textContent = extraSkills.length > 0 ? extraSkills.join('、') : 'なし';
